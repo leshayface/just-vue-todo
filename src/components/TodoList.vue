@@ -2,31 +2,30 @@
   <div>
     <input type="text" placeholder="What do you need to do mannn?" v-model="newTodo" @keyup.enter="addTodo" /> <!-- use v-model to bind data property -->
     <p>TODO LIST</p>
-    <div v-for="(todo, index) in todos" :key="todo.id"> <!-- grab each item from array as well as its index -->
-        <input type="checkbox" v-model="todo.completed" /> <!-- bind completed property to checkbox -->
-        <p v-if="!todo.editing" @dblclick="editTodo(todo)">{{todo.title}}</p> <!-- if editing isnt true, display the todo item -->
-        <!-- if editing is true, display the editing input. End editing on enter / blur. On escape key call cancelEditing method -->
-        <input
-          v-else type="text"
-          v-model="todo.title"
-          @blur="doneEditing(todo)"
-          @keyup.enter="doneEditing(todo)"
-          @keyup.esc="cancelEditing(todo)"
-          v-focus
-        />
-        <h3 @click="removeTodo(index)">X</h3> <!-- on click call removeTodo method -->
-    </div>
-    <div>{{ remaining }} items left</div> <!-- computed properties can be referred to like data properties -->
+    <todo
+      v-for="(todo, index) in todos"
+      :key="todo.id" :todo="todo"
+      :index="index"
+      @removedTodo="removeTodo"
+      @finishedEdit="finishedEdit"
+    > <!-- grab each item from array as well as its index -->
+    </todo>
+    <div>{{ remaining }} items left</div>
+     <!-- <div>{{ remaining }} items left</div> computed properties can be referred to like data properties -->
   </div>
 </template>
 
 <script>
+import Todo from './Todo'
+
 export default {
   name: 'todo-list',
+  components: {
+    Todo,
+  },
   data () {
     return {
       newTodo: '',
-      newTodoID: 3,
       beforeEditCache: '',
       todos: [
         {
@@ -65,39 +64,28 @@ export default {
       this.newTodo = ''; //set newTodo text to empty
       this.newTodoID = this.newTodoID++; //increment newTodoID for next todo
     },
+    finshedEdit(data) {
+      this.todos.splice(data.index, 1, data.todo)
+    },
     removeTodo(index) {
       this.todos.splice(index, 1); //splice todo array by index and remove 1 item
     },
-    editTodo(todo) {
-      this.beforeEditCache = todo.title;
-      todo.editing = true;
-    },
-    doneEditing(todo) {
-      todo.editing = false;
-      //if edited todo is empty set it to the previous text
-      if (todo.title.trim() == '') {
-        todo.title = this.beforeEditCache
-      }
-    },
-    cancelEditing(todo) {
-      //set editing to false and set text back to its previous string
-      todo.editing = false;
-      todo.title = this.beforeEditCache
+    finishedEdit(data) {
+      const index = this.todos.findIndex((item) => item.id == data.id)
+      this.todos.splice(index, 1, data)
     }
   },
-  //computed property is for composing new data derived from other data
   computed: {
     remaining() {
-      return this.todos.filter(todo => !todo.completed).length;
-    }
+      return this.todos.filter(todo => !todo.completed).length
+    },
   },
-  directives: {
-    focus: {
-      inserted: function (el) {
-        el.focus()
-      }
-    }
-  }
+  //computed property is for composing new data derived from other data
+  // computed: {
+  //   remaining() {
+  //     return this.todos.filter(todo => !todo.completed).length;
+  //   }
+  // },
 }
 </script>
 
